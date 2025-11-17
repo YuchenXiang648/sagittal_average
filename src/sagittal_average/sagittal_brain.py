@@ -1,21 +1,34 @@
-# Open the file to analyse
-myfile = open('brain_sample.csv', 'r')
+from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 
-# Create a plane list to keep a list per row
-planes = []
-for line in myfile.readlines():
-    planes.append([int(x) for x in line.split("\n")[0].split(',')])
-myfile.close()
+import numpy as np
 
-# Create new list to save the averages per each plane
-sagittal_averages = []
-for i in range(20):
-    total = 0
-    for j in range(20):
-        total = total + int(planes[i][j])
-    sagittal_averages.append(str(total/20))
 
-# write it out on my file
-myoutput = open('brain_average.csv', 'w')
-myoutput.write(','.join(sagittal_averages) +  '\n')
-myoutput.close()
+def run_averages(file_input='brain_sample.csv', file_output='brain_average.csv'):
+    """
+    Calculates the average through the coronal planes
+    The input file should has as many columns as coronal planes
+    The rows are intersections of the sagittal/horizontal planes
+
+    The result is the average for each sagittal/horizontal plane (rows)
+    """
+    # Open the file to analyse
+    planes = np.loadtxt(file_input, dtype=int,  delimiter=',')
+
+    # Calculates the averages through the sagittal/horizontal planes
+    # and makes it as a row vector
+    averages = planes.mean(axis=0)[np.newaxis, :]
+
+    # write it out on my file
+    np.savetxt(file_output, averages, fmt='%.1f', delimiter=',')
+
+
+if __name__ == "__main__":
+    parser = ArgumentParser(description="Calculates the average for each sagittal-horizontal plane.",
+                            formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument('file_input', nargs='?', default="brain_sample.csv",
+                        help="Input CSV file with the results from scikit-brain binning algorithm.")
+    parser.add_argument('--file_output', '-o', default="brain_average.csv",
+                        help="Name of the output CSV file.")
+    arguments = parser.parse_args()
+
+    run_averages(arguments.file_input, arguments.file_output)
